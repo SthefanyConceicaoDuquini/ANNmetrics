@@ -17,7 +17,6 @@ from tensorflow.keras.utils import custom_object_scope
 
 # ler arquivo do modelo h5 de rede neural artificial
 def ler_arquivo_h5(caminho_arquivo):
-    # Substitua "caminho_para_o_arquivo" pelo caminho real do seu arquivo h5
     modelo = tf.keras.models.load_model(caminho_arquivo)
 
     return modelo
