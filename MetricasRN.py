@@ -4,7 +4,7 @@ from tkinter import filedialog, ttk
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
-from mpl_toolkits.mplot3d import Axes3D  # Import for 3D zooming
+from mpl_toolkits.mplot3d import Axes3D 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter as tk
 from tkinter import ttk
@@ -188,6 +188,20 @@ def calcular_comprimento_neuronio(dados_neuronio):
     return comprimento
 
 # Função para contar o número de ramos
+import numpy as np
+import networkx as nx
+
+def calcular_comprimento_neuronio(dados_neuronio, resolucao_pixel_micrometro):
+    escala = resolucao_pixel_micrometro 
+    comprimento = 0
+    for linha in dados_neuronio:
+        if int(linha[6]) != -1:  # Se não for um ponto terminal
+            pai = int(linha[6])
+        
+            comprimento += np.linalg.norm((dados_neuronio[int(pai)][2:5] - linha[2:5]) * escala)
+    return comprimento
+
+
 def contar_ramos(dados_neuronio):
     ramos = set()
     for linha in dados_neuronio:
@@ -196,17 +210,17 @@ def contar_ramos(dados_neuronio):
             ramos.add(pai)
     return len(ramos)
 
-# Função para contar o número de terminações
 def contar_terminacoes(dados_neuronio):
     terminacoes = 0
-    pontos = set(linha[0] for linha in dados_neuronio)
-    for linha in dados_neuronio:
-        ponto = linha[6]
-        if ponto not in pontos:  # Se for um ponto terminal
-            terminacoes += 1
+    pontos_origem = set(linha[0] for linha in dados_neuronio)
+    pontos_destino = set(linha[1] for linha in dados_neuronio)
+    
+    terminacoes = len(pontos_origem - pontos_destino)
+    
     return terminacoes
 
-# Função para contar o número de interseções
+
+
 def contar_intersecoes(dados_neuronio):
     intersecoes = 0
     pais = set()
@@ -219,7 +233,6 @@ def contar_intersecoes(dados_neuronio):
                 pais.add(pai)
     return intersecoes
 
-# Função para calcular a média dos graus dos nós
 def calcular_media_grau_nos(dados_neuronio):
     G = nx.Graph()
     for linha in dados_neuronio:
@@ -229,15 +242,12 @@ def calcular_media_grau_nos(dados_neuronio):
     graus = [grau for nó, grau in G.degree()]
     return np.mean(graus) if graus else 0
 
-
-
-
-# Função para extrair as posições do neurônio
 def extrair_posicoes_neuronio(dados_neuronio):
     pos = {}
     for linha in dados_neuronio:
         pos[int(linha[0])] = (linha[2], linha[3], linha[4])
     return pos
+
 
 ################ Inicio da extracao de medidas da rede neural artificial########
 
@@ -302,7 +312,9 @@ def exibir_tela_informacoes_neuronio_individual(arquivo_selecionado):
         tela_selecao_analise()
     
     dados_neuronio = ler_arquivo_swc(arquivo_selecionado)
-    comprimento = calcular_comprimento_neuronio(dados_neuronio)
+    resolucao_pixel_micrometro = 0.1 
+    comprimento = calcular_comprimento_neuronio(dados_neuronio, resolucao_pixel_micrometro)
+
     num_ramos = contar_ramos(dados_neuronio)
     num_terminacoes = contar_terminacoes(dados_neuronio)
     num_intersecoes = contar_intersecoes(dados_neuronio)
@@ -321,7 +333,7 @@ def exibir_tela_informacoes_neuronio_individual(arquivo_selecionado):
     lbl_info_neuronio.pack(pady=10, anchor="w")
     lbl_num_pontos = ttk.Label(fr, text=f"Número de Pontos: {len(dados_neuronio)}", foreground="white", background="#161e33", font=("Helvetica", 22), borderwidth=10)
     lbl_num_pontos.pack(anchor="w")
-    lbl_comprimento = ttk.Label(fr, text=f"Comprimento do Neurônio: {comprimento:.2f} unidades", foreground="white", background="#161e33", font=("Helvetica", 22), borderwidth=10)
+    lbl_comprimento = ttk.Label(fr, text=f"Comprimento do Neurônio: {comprimento:.2f} µm", foreground="white", background="#161e33", font=("Helvetica", 22), borderwidth=10)
     lbl_comprimento.pack(anchor="w")
     lbl_num_ramos = ttk.Label(fr, text=f"Número de Ramos: {num_ramos}", foreground="white", background="#161e33", font=("Helvetica", 22), borderwidth=10)
     lbl_num_ramos.pack(anchor="w")
@@ -453,20 +465,20 @@ def exibir_tela_informacoes_rede_neuronios(arquivo_selecionado, grafo, posicoes)
         for node, centrality in betweenness_centrality.items():
             ttk.Label(fr_betweenness, text=f"Nó {node}: {centrality:.4f}", font=("Helvetica", 22), foreground="white", background="#040c24").pack(anchor="w")
 
-    indegreeB = Button(root, text="In-Degree Centrality", border=0, height=2, width=30, font=("consolas", 20), command=abrir_janela_in_degree)
-    indegreeB.place(x=10, y=490)
+    indegreeB = Button(root, text="Centralidade de Grau de Entrada", border=0, height=2, width=30, font=("consolas", 20), command=abrir_janela_in_degree)
+    indegreeB.place(x=10, y=450)
     indegreeB.config(bg="#161e33", fg="#FFFFFF")
     
-    outdegreeB = Button(root, text="Out-Degree Centrality", border=0, height=2, width=30, font=("consolas", 20), command=abrir_janela_out_degree)
-    outdegreeB.place(x=10, y=530)
+    outdegreeB = Button(root, text="Centralidade de Grau de Saida", border=0, height=2, width=30, font=("consolas", 20), command=abrir_janela_out_degree)
+    outdegreeB.place(x=10, y=520)
     outdegreeB.config(bg="#161e33", fg="#FFFFFF")
     
-    closenessB = Button(root, text="Closeness Centrality", border=0, height=2, width=30, font=("consolas", 20), command=abrir_janela_closeness)
-    closenessB.place(x=10, y=570)
+    closenessB = Button(root, text="Centralidade de Proximidade", border=0, height=2, width=30, font=("consolas", 20), command=abrir_janela_closeness)
+    closenessB.place(x=10, y=580)
     closenessB.config(bg="#161e33", fg="#FFFFFF")
     
-    betweennessB = Button(root, text="Betweenness Centrality", border=0, height=2, width=30, font=("consolas", 20), command=abrir_janela_betweenness)
-    betweennessB.place(x=10, y=610)
+    betweennessB = Button(root, text="Centralidade de Intermediação", border=0, height=2, width=30, font=("consolas", 20), command=abrir_janela_betweenness)
+    betweennessB.place(x=10, y=640)
     betweennessB.config(bg="#161e33", fg="#FFFFFF")
 
 
@@ -549,6 +561,7 @@ def exibir_tela_medidas_rede_artificial(arquivo_selecionado):
         ax.set_facecolor('#040c24')
         ax.set_title('Neuronios da rede artificial', color='white')
         cores = ['#FFB6C1', '#DA70D6', '#ADD8E6']
+        ax.scatter(0, 0, label='Input Layer', s=100, facecolor='#FF6347')
 
         for i, camada in enumerate(modelo.layers):
             x_coords = np.ones(camada.units) * i
